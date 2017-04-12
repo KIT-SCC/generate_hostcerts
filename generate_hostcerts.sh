@@ -123,6 +123,13 @@ EOF
 }
 
 req_certs () {
+  if [ -z "$organisation" -o -z "$phone" -o -z "$email" -o -z "$ra_name" -o -z "$ra_id" -o -z "$domain" ]
+  then
+    echo "At least one of the mandatory operands for the REQUEST run-mode is missing!" >&2
+    usage >&2
+    exit 1
+  fi
+  
   echo "Requesting new host certificates as $email."
   echo "Reading private user key..."
   tmp=mktemp && { exec 3>"$tmp"; unlink "$tmp"; }
@@ -170,6 +177,11 @@ req_certs () {
 }
 
 get_certs () {
+  if [ -z "$domain" ]
+  then
+    echo "The domain option is not set!" >&2
+    exit 1
+  fi
   while read hn
   do
     hn="$hn.$domain"
@@ -189,7 +201,7 @@ get_certs () {
     elif [ -s "$certfile" ]
     then
       echo -n "The host certificate was fetched and will be moved to $out..."
-      /bin/mv -v "$certfile" "$out/" && echo "Done!"
+      /bin/mv "$certfile" "$out/" && echo "Done!"
       /bin/rm "$reqfile" 2>/dev/null
     fi
   done
@@ -199,7 +211,7 @@ drop () {
   while read h
   do
     echo "Drop the request for $h"
-    /bin/rm -v "$usercache/$h.$domain.hostreq.pem"
+    /bin/rm -v "$usercache/$h"*.hostreq.pem
   done
 }
 
@@ -251,37 +263,15 @@ fi
 
 case "$mode" in
   REQUEST)
-    if [ -z "$organisation" -o -z "$phone" -o -z "$email" -o -z "$ra_name" -o -z "$ra_id" -o -z "$domain" ]
-    then
-      echo "At least one of the mandatory operands for the REQUEST run-mode is missing!" >&2
-      usage >&2
-      exit 1
-    else
-      req_certs
-    fi;;
+    req_certs;;
   GET)
-    if [ -z "$domain" ]
-    then
-      echo "The domain is not set!" >&2
-      usage >&2
-      exit 1
-    else
-      get_certs
-    fi;;
+    get_certs;;
   GETALL)
-    get_certs < <(for r in $(cd "$usercache"; ls *.hostreq.pem)
-                  do
-                    echo "${r%.$domain.hostreq.pem}"
-                  done);;
+    find $usercache -type f -name *.hostreq.pem -printf "%f\n" |\
+      sed "s/\.$domain\.hostreq\.pem\$//" |\
+      get_certs;;
   DROP)
-    if [ -z "$domain" ]
-    then
-      echo "The domain is not set!" >&2
-      usage >&2
-      exit 1
-    else
-      drop
-    fi;;
+    drop;;
   PURGE)
     purge;;
   *)
