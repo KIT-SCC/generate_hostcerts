@@ -25,6 +25,7 @@ declare -a aliases
 out=/tmp
 comment=
 mode=
+usercache="$HOME/.hostcert_requests"
 
 usage () {
   cat <<EOF
@@ -105,6 +106,9 @@ All following options are optional or are initialized with default values.
     The output directory, where host keys and certificates will be put after
     successful retrieval (ignored otherwise) - $out by default.
   
+  -u DIR
+    Use DIR for caching new requests instead of a (hidden) directory
+    in HOME ($usercache).
 EOF
 }
 
@@ -220,7 +224,7 @@ purge () {
   /bin/rm -r "$usercache" && echo "Done!"
 }
 
-while getopts "D:E:I:M:O:P:R:a:c:fhk:m:o:z:" opt
+while getopts "D:E:I:M:O:P:R:a:c:fhk:m:o:z:u:" opt
 do
   case "$opt" in
     D) domain="$OPTARG";;
@@ -237,6 +241,7 @@ do
     k) userkey="$OPTARG";;
     m) comment="$OPTARG";;
     o) out="$OPTARG";;
+    u) usercache="$OPTARG";;
     esac
 done
 
@@ -248,8 +253,7 @@ then
 fi
 
 # Directory to spool requests 
-usercache="$HOME/.hostcert_requests"
-if [ ! -e "$usercache" ]
+if [ ! -d "$usercache" ]
 then
   mkdir -p "$usercache" || { echo "$usercache is missing!" >&2; exit 2; }
 fi
