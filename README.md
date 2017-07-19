@@ -106,4 +106,10 @@ All following options are optional or are initialized with default values.
     The output directory, where host keys and certificates will be put after
     successful retrieval (ignored otherwise) - `/tmp` by default.
   </dd>
+
+  <dt>-u DIR</dt>
+  <dd>
+    Use DIR for caching new requests instead of a (hidden) directory
+    in HOME (`$HOME/.hostcert_requests`).
+  </dd>
 </dl>
