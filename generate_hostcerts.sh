@@ -151,6 +151,12 @@ req_certs () {
     local reqfile="$usercache/$hn.hostreq.pem"
     local keyfile="$usercache/$hn.hostkey.pem"
     
+    if [ -e "$reqfile" ]
+    then
+      echo "Found an open request for $hn. Skipping..."
+      continue
+    fi
+    
     # Generate a new request for this host.
     echo -n "Generate new request file for $hn... "
     /usr/bin/openssl req \
