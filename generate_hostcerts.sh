@@ -158,17 +158,20 @@ req_certs () {
     fi
     
     # Generate a new request for this host.
-    echo -n "Generate new request file for $hn... "
+    echo "Generate new request file for $hn..."
     /usr/bin/openssl req \
       -newkey rsa:2048 -nodes \
       -keyout "$keyfile" \
       -out "$reqfile" \
       -subj "/C=DE/O=GermanGrid/OU=$organisation/CN=$hn"\
-      -config <( print_config )\
-      2>/dev/null && echo "Done!" || { echo "Failed!"; continue; }
+      -config <( print_config ) || {
+        rc=$?
+        echo "Failed to generate new private key!" >&2
+        exit $rc
+      }
     
     # Proceed to submit the request to the GridKa CA.
-    echo -n "Submit request for $hn to CA... "
+    echo "Submit request for $hn to CA..."
     /usr/bin/curl -sS\
       --cert "$usercert"\
       --key /proc/$$/fd/3\
@@ -182,7 +185,11 @@ req_certs () {
       --form pemfile="@$reqfile"\
       --form button=absenden\
       --form requesttyp=2\
-      https://gridka-ca.kit.edu/sec/pem_req2.php >/dev/null && echo "Done!"
+      https://gridka-ca.kit.edu/sec/pem_req2.php >/dev/null || {
+        rc=$?
+        echo "Failed to submit the request to the GridKa CA!" >&2
+        exit $rc
+      }
   done
 }
 
@@ -198,11 +205,11 @@ get_certs () {
     local reqfile="$usercache/$hn.hostreq.pem"
     local keyfile="$usercache/$hn.hostkey.pem"
     local certfile="$usercache/$hn.hostcert.pem"
-    echo -n "Fetch the host certificate of $hn... "
+    echo "Fetch the host certificate of $hn..."
     /usr/bin/curl -s -o "$certfile" \
-      "https://gridka-ca.kit.edu/abholen3.php?hostname=$hn" \
-      && echo "Done!"\
-      || echo "Failed!"
+      "https://gridka-ca.kit.edu/abholen3.php?hostname=$hn" || {
+        echo "Failed to fetch the certificate of $hn!" >&2
+      }
     
     if [ -s "$certfile" -a -s "$keyfile" ]
     then
