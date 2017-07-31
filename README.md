@@ -25,6 +25,9 @@ on invocation. The following modes are currently implemented:
   <dt>GETALL</dt>
   <dd>Attempt to retrieve finalized certificates for all cached requests.</dd>
   
+  <dt>LIST</dt>
+  <dd>List all requests found in the cache directory.</dd>
+  
   <dt>PURGE</dt>
   <dd>Completely purge the cache.</dd>
 </dl>

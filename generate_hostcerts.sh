@@ -41,6 +41,8 @@ The script has different run-modes (-M):
   Dismiss requests for those hosts read from stdin.
 * GETALL
   Attempt to retrieve finalized certificates for all current requests.
+* LIST
+  List all requests found in the cache directory.
 * PURGE
   Completely purge the cache of current requests.
 Either of these must be selected!
