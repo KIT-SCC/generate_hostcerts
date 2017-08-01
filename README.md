@@ -38,9 +38,6 @@ Either of these *must* be selected!
 Even though the following operands look like options, they are actually
 mandatory in _request_ run-mode.
 <dl>
-  <dt>-D DOMAINSUFFIX</dt>
-  <dd>The domain will be appended to all host names.</dd>
-
   <dt>-E MAIL</dt>
   <dd>The email address submitted when issuing requests.</dd>
   
@@ -88,6 +85,9 @@ All following options are optional or are initialized with default values.
     _Default_: `$HOME/.globus/usercert.pem`
   </dd>
   
+  <dt>-d DOMAINSUFFIX</dt>
+  <dd>The domain will be appended to all host names.</dd>
+
   <dt>-f</dt>
   <dd>You will be addressed as a female, male by default.</dd>
    
