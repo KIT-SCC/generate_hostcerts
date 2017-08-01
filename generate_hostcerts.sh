@@ -281,6 +281,9 @@ then
 fi
 
 case "$mode" in
+  LIST)
+    echo "Current requests found in $usercache..."
+    find $usercache -type f -name *.hostreq.pem -printf " * %f\n";;
   REQUEST)
     req_certs;;
   GET)
