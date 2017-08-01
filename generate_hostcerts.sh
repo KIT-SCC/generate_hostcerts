@@ -51,9 +51,6 @@ Either of these must be selected!
 Even though the following operands look like options, they are actually
 mandatory in REQUEST run-mode.
 
-  -D DOMAINSUFFIX
-    The domain will be appended to all host names.
-  
   -E MAIL
     The email address submitted when issuing requests.
   
@@ -89,6 +86,9 @@ All following options are optional or are initialized with default values.
   -c FILE
     Set the user certificate to be used for generating requests.
     Default: $usercert
+  
+  -d DOMAINSUFFIX
+    The domain will be appended to all host names.
   
   -f
     You will be addressed as a female, male by default.
@@ -129,7 +129,7 @@ EOF
 }
 
 req_certs () {
-  if [ -z "$organisation" -o -z "$phone" -o -z "$email" -o -z "$ra_name" -o -z "$ra_id" -o -z "$domain" ]
+  if [ -z "$organisation" -o -z "$phone" -o -z "$email" -o -z "$ra_name" -o -z "$ra_id" ]
   then
     echo "At least one of the mandatory operands for the REQUEST run-mode is missing!" >&2
     usage >&2
@@ -143,11 +143,12 @@ req_certs () {
   
   while read hn more
   do
-    hn="$hn.$domain"
+    # If $domain is set, append it with an extra '.' separator.
+    hn="$hn${domain:+.$domain}"
     the_sans=$(echo -n "DNS:$hn"
       for h in "${aliases[@]}" $more
       do
-        echo -n ", DNS:$h.$domain"
+        echo -n ", DNS:$h${domain:+.$domain}"
       done
     )
     local reqfile="$usercache/$hn.hostreq.pem"
@@ -196,32 +197,42 @@ req_certs () {
 }
 
 get_certs () {
-  if [ -z "$domain" ]
-  then
-    echo "The domain option is not set!" >&2
-    exit 1
-  fi
   while read hn
   do
-    hn="$hn.$domain"
-    local reqfile="$usercache/$hn.hostreq.pem"
-    local keyfile="$usercache/$hn.hostkey.pem"
-    local certfile="$usercache/$hn.hostcert.pem"
-    echo "Fetch the host certificate of $hn..."
+    # In GETALL runmode, we get the actual file names from find.
+    if [ "$mode" == 'GETALL' ]
+    then
+      local reqfile="$usercache/$hn"
+      local keyfile="$usercache/${hn/hostreq/hostkey}"
+      local certfile="$usercache/${hn/hostreq/hostcert}"
+      hn="${hn%.hostreq.pem}"
+    else
+      hn="$hn${domain:+.$domain}"
+      local reqfile="$usercache/$hn.hostreq.pem"
+      local keyfile="$usercache/$hn.hostkey.pem"
+      local certfile="$usercache/$hn.hostcert.pem"
+    fi
+          
+    echo -n "Fetch the host certificate of $hn... "
     /usr/bin/curl -s -o "$certfile" \
-      "https://gridka-ca.kit.edu/abholen3.php?hostname=$hn" || {
-        echo "Failed to fetch the certificate of $hn!" >&2
-      }
+      "https://gridka-ca.kit.edu/abholen3.php?hostname=$hn" \
+        && echo 'Done!' \
+        || {
+          rc=$?
+          echo "Failed to fetch the certificate for $hn!" >&2
+          exit $rc
+        }
     
     if [ -s "$certfile" -a -s "$keyfile" ]
     then
-      echo -n "Moving host certificate and key to $out..."
-      /bin/mv "$certfile" "$keyfile" "$out/" && /bin/rm "$reqfile" && echo "Done!"
+      echo "Move the new host certificate and key to $out..."
+      /bin/mv -v "$certfile" "$keyfile" "$out/" \
+        && /bin/rm "$reqfile" 2>/dev/null
     elif [ -s "$certfile" ]
     then
-      echo -n "The host certificate was fetched and will be moved to $out..."
-      /bin/mv "$certfile" "$out/" && echo "Done!"
-      /bin/rm "$reqfile" 2>/dev/null
+      echo "The host certificate was fetched and will be moved to $out..."
+      /bin/mv -v "$certfile" "$out/" \
+        && /bin/rm "$reqfile" 2>/dev/null
     fi
   done
 }
@@ -229,20 +240,21 @@ get_certs () {
 drop () {
   while read h
   do
+    h="h${domain:+.$domain}"
     echo "Drop the request for $h"
-    /bin/rm -v "$usercache/$h"*.hostreq.pem
+    /bin/rm -v "$usercache/$h.hostreq.pem"
   done
 }
 
 purge () {
   echo -n "Clear cache $usercache ... "
-  /bin/rm -r "$usercache" && echo "Done!"
+  /bin/rm -fr "$usercache" && echo "Done!"
 }
 
-while getopts "D:E:I:M:O:P:R:a:c:fhk:m:o:z:u:" opt
+while getopts "d:E:I:M:O:P:R:a:c:fhk:m:o:z:u:" opt
 do
   case "$opt" in
-    D) domain="$OPTARG";;
+    d) domain="$OPTARG";;
     E) email="$OPTARG";;
     I) ra_id="$OPTARG";;
     M) mode="$OPTARG";;
@@ -283,15 +295,14 @@ fi
 case "$mode" in
   LIST)
     echo "Current requests found in $usercache..."
-    find $usercache -type f -name *.hostreq.pem -printf " * %f\n";;
+    find $usercache -type f -name *.hostreq.pem -printf " * %f\n" |\
+      sed 's/.hostreq.pem//';;
   REQUEST)
     req_certs;;
   GET)
     get_certs;;
   GETALL)
-    find $usercache -type f -name *.hostreq.pem -printf "%f\n" |\
-      sed "s/\.$domain\.hostreq\.pem\$//" |\
-      get_certs;;
+    find $usercache -type f -name *.hostreq.pem -printf "%f\n" | get_certs;;
   DROP)
     drop;;
   PURGE)
