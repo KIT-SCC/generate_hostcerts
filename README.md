@@ -73,7 +73,7 @@ All following options are optional or are initialized with default values.
   <dt>-a ALIAS[,ALIAS,...]</dt>
   <dd>
     A comma-seperated list of alternative host names to be included
-    with _all_ requests, ignored otherwise.
+    with <i>all</i> requests, ignored otherwise.
     It is also possible to add aliases for a specific hostname, by listing
     them on the same line. Ie. the first word read per line is the primary
     hostname and all others will be included as an alias.
@@ -81,8 +81,8 @@ All following options are optional or are initialized with default values.
   
   <dt>-c FILE</dt>
   <dd>
-    Set the user certificate to be used for generating requests.
-    _Default_: `$HOME/.globus/usercert.pem`
+    Set the user certificate to be used for generating requests.<br />
+    <i>Default</i>: <code>$HOME/.globus/usercert.pem</code>
   </dd>
   
   <dt>-d DOMAINSUFFIX</dt>
@@ -97,8 +97,8 @@ All following options are optional or are initialized with default values.
   <dt>-k FILE</dt>
   <dd>
     Set the private user key to be used when generating new requests.
-    You will be prompted for a password if the key is encrypted.
-    _Default_: `$HOME/.globus/userkey.pem`
+    You will be prompted for a password if the key is encrypted.<br />
+    <i>Default</i>: <code>$HOME/.globus/userkey.pem</code>
   </dd>
   
   <dt>-m COMMENT</dt>
@@ -107,12 +107,12 @@ All following options are optional or are initialized with default values.
   <dt>-o DIR</dt>
   <dd>
     The output directory, where host keys and certificates will be put after
-    successful retrieval (ignored otherwise) - `/tmp` by default.
+    successful retrieval (ignored otherwise) - <code>/tmp</code> by default.
   </dd>
 
   <dt>-u DIR</dt>
   <dd>
     Use DIR for caching new requests instead of a (hidden) directory
-    in HOME (`$HOME/.hostcert_requests`).
+    in HOME (<code>$HOME/.hostcert_requests</code>).
   </dd>
 </dl>
