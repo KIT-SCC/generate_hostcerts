@@ -1,13 +1,11 @@
 #!/bin/bash
-#description : This script manages (generate,send,get) certificate requests
+#description : This script manages (generate+send+get) certificate requests
 #              towards the GridKa CA service.
 #author      : Xavier Mol, Pavel Weber
-#date        : 16.01.2017
+#date        : 03.01.2018
 #version     : 1.1
 #notes       : The number of hosts is not limited.
 #              Host names are read from stdin - one per line.
-#              All current requests are kept in a cache in the user's
-#                $HOME directory.
 #              After a successful retrieval of the requested host certificate,
 #                the request will be removed from that cache.
 
@@ -80,7 +78,7 @@ All following options are optional or are initialized with default values.
     A comma-seperated list of alternative host names to be included
     with _all_ requests, ignored otherwise.
     It is also possible to add aliases for a specific hostname, by listing
-    them on the same line. Ie. the first word read per line is the primary
+    them on the same line. I.e. the first word read per line is the primary
     hostname and all others will be included as an alias.
   
   -c FILE
@@ -128,6 +126,11 @@ subjectAltName = "$the_sans"
 EOF
 }
 
+# Check that a file is a valid host certificate.
+verify_cert () {
+  openssl x509 -in "$1" -noout
+}
+
 req_certs () {
   if [ -z "$organisation" -o -z "$phone" -o -z "$email" -o -z "$ra_name" -o -z "$ra_id" ]
   then
@@ -169,7 +172,8 @@ req_certs () {
       -subj "/C=DE/O=GermanGrid/OU=$organisation/CN=$hn"\
       -config <( print_config ) || {
         rc=$?
-        echo "Failed to generate new private key!" >&2
+        echo "Failed to generate new request!" >&2
+        /bin/rm "$reqfile" "$keyfile" 2>/dev/null
         exit $rc
       }
     
@@ -191,6 +195,7 @@ req_certs () {
       https://gridka-ca.kit.edu/sec/pem_req2.php >/dev/null || {
         rc=$?
         echo "Failed to submit the request to the GridKa CA!" >&2
+        /bin/rm "$reqfile" "$keyfile" 2>/dev/null
         exit $rc
       }
   done
@@ -213,15 +218,20 @@ get_certs () {
       local certfile="$usercache/$hn.hostcert.pem"
     fi
           
-    echo -n "Fetch the host certificate of $hn... "
     /usr/bin/curl -s -o "$certfile" \
-      "https://gridka-ca.kit.edu/abholen3.php?hostname=$hn" \
-        && echo 'Done!' \
-        || {
-          rc=$?
-          echo "Failed to fetch the certificate for $hn!" >&2
-          exit $rc
-        }
+      "https://gridka-ca.kit.edu/abholen3.php?hostname=$hn"
+    
+    # Check whether the file produced can be parsed successfully as a
+    # host certificate (the exit status for the GridKa CA's php script is
+    # always 0, even if no certificate was provided or any error occured).
+    if verify_cert "$certfile"
+    then
+      echo "Fetched the host certificate of $hn."
+    else
+      echo "Failed to fetch the certificate for $hn!" >&2
+      /bin/rm "$certfile" &>/dev/null
+      exit 6
+    fi
     
     if [ -s "$certfile" -a -s "$keyfile" ]
     then
