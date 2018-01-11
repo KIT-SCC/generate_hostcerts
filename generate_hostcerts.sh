@@ -224,12 +224,15 @@ get_certs () {
     # Check whether the file produced can be parsed successfully as a
     # host certificate (the exit status for the GridKa CA's php script is
     # always 0, even if no certificate was provided or any error occured).
-    if verify_cert "$certfile"
+    if [ ! -s "$certfile" ]
+    then
+      echo "Host certificate of $hn not ready yet."
+    elif verify_cert "$certfile"
     then
       echo "Fetched the host certificate of $hn."
     else
-      echo "Failed to fetch the certificate for $hn!" >&2
-      /bin/rm "$certfile" &>/dev/null
+      echo "Invalid host certificate produced for $hn!" >&2
+      exit 6
     fi
     
     if [ -s "$certfile" -a -s "$keyfile" ]
