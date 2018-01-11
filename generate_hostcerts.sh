@@ -2,8 +2,8 @@
 #description : This script manages (generate+send+get) certificate requests
 #              towards the GridKa CA service.
 #author      : Xavier Mol, Pavel Weber
-#date        : 03.01.2018
-#version     : 1.1
+#date        : 11.01.2018
+#version     : 1.2
 #notes       : The number of hosts is not limited.
 #              Host names are read from stdin - one per line.
 #              After a successful retrieval of the requested host certificate,
@@ -230,7 +230,6 @@ get_certs () {
     else
       echo "Failed to fetch the certificate for $hn!" >&2
       /bin/rm "$certfile" &>/dev/null
-      exit 6
     fi
     
     if [ -s "$certfile" -a -s "$keyfile" ]
@@ -250,7 +249,7 @@ get_certs () {
 drop () {
   while read h
   do
-    h="h${domain:+.$domain}"
+    h="$h${domain:+.$domain}"
     echo "Drop the request for $h"
     /bin/rm -v "$usercache/$h.hostreq.pem"
   done
