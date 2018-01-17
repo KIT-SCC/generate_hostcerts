@@ -17,6 +17,7 @@ organisation=
 ra_name=
 ra_id=
 salut='Herr'
+name='Robot Puppet'
 email=
 phone=
 declare -a aliases
@@ -102,6 +103,12 @@ All following options are optional or are initialized with default values.
   -m COMMENT
     A comment that will be supplied to all requests (ignored otherwise).
   
+  -n NAME
+    A name that will be broken into first and last name (at the last white
+    space) and submitted to the GridKa CA. This option is mandatory when
+    using a robot certificate for submissions (but the script is unable
+    to enforce it)!
+  
   -o DIR
     The output directory, where host keys and certificates will be put after
     successful retrieval (ignored otherwise) - $out by default.
@@ -177,6 +184,8 @@ req_certs () {
         exit $rc
       }
     
+    fstname=${name% *}
+    lstname=${name##* }
     # Proceed to submit the request to the GridKa CA.
     echo "Submit request for $hn to CA..."
     /usr/bin/curl -sS\
@@ -184,6 +193,8 @@ req_certs () {
       --key /proc/$$/fd/3\
       --cacert "$kit_ca_chain"\
       --form anrede="$salut"\
+      --form vorname="$fstname"\
+      --form nachname="$lstname"\
       --form email="$email"\
       --form telefon="$phone"\
       --form raname=$ra_name\
@@ -266,7 +277,6 @@ purge () {
 while getopts "d:E:I:M:O:P:R:a:c:fhk:m:o:z:u:" opt
 do
   case "$opt" in
-    d) domain="$OPTARG";;
     E) email="$OPTARG";;
     I) ra_id="$OPTARG";;
     M) mode="$OPTARG";;
@@ -275,10 +285,12 @@ do
     R) ra_name="$OPTARG";;
     a) IFS=, read -a aliases <<<"$OPTARG";;
     c) usercert="$OPTARG";;
+    d) domain="$OPTARG";;
     f) salut='Frau';;
     h) usage && exit;;
     k) userkey="$OPTARG";;
     m) comment="$OPTARG";;
+    n) name="$OPTARG";;
     o) out="$OPTARG";;
     u) usercache="$OPTARG";;
     esac
