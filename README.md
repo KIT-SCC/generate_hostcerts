@@ -104,6 +104,14 @@ All following options are optional or are initialized with default values.
   <dt>-m COMMENT</dt>
   <dd>A comment that will be supplied to all requests (ignored otherwise).</dd>
   
+  <dt>-n NAME</dt>
+  <dd>
+    A name that will be broken into first and last name (at the last white
+    space) and submitted to the GridKa CA. This option is mandatory when
+    using a robot certificate for submissions (but the script is unable
+    to enforce it)!
+  </dd>
+
   <dt>-o DIR</dt>
   <dd>
     The output directory, where host keys and certificates will be put after
