@@ -199,7 +199,8 @@ req_certs () {
       --form telefon="$phone"\
       --form raname=$ra_name\
       --form ra_ID=$ra_id\
-      --form anmerkung="$comment $the_sans"\
+      --form anmerkung="$comment"\
+      --form altname="$the_sans"\
       --form pemfile="@$reqfile"\
       --form button=absenden\
       --form requesttyp=2\
